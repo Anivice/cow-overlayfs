@@ -29,6 +29,7 @@
 #include "color.h"
 #include "execute_command.h"
 #include "error.h"
+#include "rstring.h"
 
 require_back_trace_t require_back_trace;
 #define MAX_STACK_FRAMES (64)
@@ -106,26 +107,6 @@ std::string backtrace_level_1()
     }
 
     return ss.str();
-}
-
-std::string replace_all(
-    std::string & original,
-    const std::string & target,
-    const std::string & replacement)
-{
-    if (target.empty()) return original; // Avoid infinite loop if target is empty
-
-    if (target.size() == 1 && replacement.empty()) {
-        std::erase_if(original, [&target](const char c) { return c == target[0]; });
-        return original;
-    }
-
-    size_t pos = 0;
-    while ((pos = original.find(target, pos)) != std::string::npos) {
-        original.replace(pos, target.length(), replacement);
-        pos += replacement.length(); // Move past the replacement to avoid infinite loop
-    }
-    return original;
 }
 
 // slow backtrace, with better trace info

@@ -64,4 +64,8 @@ add_executable(cppCowOverlay            src/main.cpp
         src/debug/color.cpp             src/include/color.h
         src/debug/error.cpp             src/include/error.h
         src/debug/execute_command.cpp   src/include/execute_command.h
+        src/utils/lz4.c                 src/include/lz4.h
+        src/utils/configuration.cpp     src/include/configuration.h
+        src/utils/rstring.cpp
+        src/include/rstring.h
 )
