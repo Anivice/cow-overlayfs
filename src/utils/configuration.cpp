@@ -3,11 +3,6 @@
 #include <regex>
 #include "rstring.h"
 #include "configuration.h"
-#include "error.h"
-
-class InvalidConfiguration final : cppCowOverlayBaseErrorType {
-    public: explicit InvalidConfiguration(const std::string & msg) : cppCowOverlayBaseErrorType(msg) {}
-};
 
 std::string clean_line(const std::string& line)
 {
@@ -50,7 +45,7 @@ std::string process_value(std::string value)
             if (env == nullptr) {
                 return "";
             }
-            return std::string(env);
+            return env;
         }
     );
 }

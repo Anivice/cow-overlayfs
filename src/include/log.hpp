@@ -289,6 +289,12 @@ namespace debug {
         return (c == '\n');
     }
 
+    template < typename RandomType >
+    bool _do_i_show_caller_next_time_(const RandomType &)
+    {
+        return false;
+    }
+
     template<typename T>
     struct is_char_array : std::false_type {};
 
@@ -434,7 +440,7 @@ namespace debug {
 #define _lstr(x)            #x
 #define _str(x)             _lstr(x)
 
-#define print_log(...)      (void)::debug::log(debug::prefix_string_t(color::color(2,3,4) + "(" + debug::strip_func_name(std::source_location::current().function_name()) + (DEBUG ? " " __FILE__ ":" _str(__LINE__) : "") + ")"), __VA_ARGS__)
+#define print_log(...)      (void)::debug::log(debug::prefix_string_t(color::color(2,3,4) + "(" + debug::strip_func_name(std::source_location::current().function_name()) + (VERBOSE ? " " __FILE__ ":" _str(__LINE__) : "") + ")"), __VA_ARGS__)
 #define DEBUG_LOG           (debug::debug_log)
 #define INFO_LOG            (debug::info_log)
 #define WARNING_LOG         (debug::warning_log)

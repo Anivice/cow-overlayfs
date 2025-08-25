@@ -4,6 +4,9 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "error.h"
+
+def_except_no_trace(InvalidConfiguration);
 
 class configuration {
 public:

@@ -6,12 +6,14 @@ set(CMAKE_C_STANDARD 23)
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     add_compile_definitions(DEBUG=1)
+    add_compile_definitions(VERBOSE=0)
     set(OPTIMIZERS
             -O0 -g3 -fsanitize=address -fsanitize=undefined -lubsan -lasan)
     add_compile_options(${OPTIMIZERS})
     add_link_options(${OPTIMIZERS})
 else ()
     add_compile_definitions(DEBUG=0)
+    add_compile_definitions(VERBOSE=0)
     set(OPTIMIZERS
             -O3
 #            -march=native
@@ -53,9 +55,9 @@ execute_process(
 
 message(STATUS "Build on ${BUILD_TIME}, of ID dran${BUILD_ID_PREFIX}time${BUILD_ID_TIMESTAMP}git${BUILD_ID_GIT_HEAD}")
 add_compile_definitions(
-        BUILD_ID="${BUILD_ID_PREFIX}:${BUILD_ID_TIMESTAMP}:${BUILD_ID_GIT_HEAD}"
+        BUILD_ID="${BUILD_ID_PREFIX}time${BUILD_ID_TIMESTAMP}git${BUILD_ID_GIT_HEAD}"
         BUILD_TIME="${BUILD_TIME}"
-        VERSION="0.9.1-Release"
+        VERSION="0.0.1"
 )
 
 include_directories(src/include)
@@ -68,4 +70,7 @@ add_executable(cppCowOverlay            src/main.cpp
         src/utils/configuration.cpp     src/include/configuration.h
         src/utils/rstring.cpp
         src/include/rstring.h
+        src/include/layer_info.h
+        src/blocks/block.cpp
+        src/include/block.h
 )
