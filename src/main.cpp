@@ -2,6 +2,7 @@
 #include "error.h"
 #include "configuration.h"
 #include "layer_info.h"
+#include "block.h"
 
 int main(int argc, char *argv[])
 {
@@ -32,9 +33,9 @@ int main(int argc, char *argv[])
             {
                 cow_assert_wm(val.size() == 1, InvalidConfiguration, "Faulty definition of key \"" + key + "\"")
                 debug_log("Entry: Section \"", section, "\": \"", key, "\": \"", val, "\"\n");
-                if (key == "attributes")
+                if (key == "log")
                 {
-                    layer_global_readonly_info.path_to_block_attribute_dir = val.front();
+                    layer_global_readonly_info.log_dir = val.front();
                 }
                 else if (key == "data")
                 {
@@ -57,10 +58,17 @@ int main(int argc, char *argv[])
 
         cow_assert_wm(
             !(layer_global_readonly_info.block_size == 0
-                || layer_global_readonly_info.path_to_block_attribute_dir.empty()
                 || layer_global_readonly_info.root_inode_name.empty()
+                || layer_global_readonly_info.log_dir.empty()
                 || layer_global_readonly_info.path_to_data_blocks.empty()),
             InvalidConfiguration, "Faulty configuration!");
+
+        const cow_block::log_manager log(layer_global_readonly_info.log_dir);
+        log.append_log(1, 2);
+        for (auto & log_v : log.get_last_n_logs(1))
+        {
+            debug_log(std::vector<uint8_t>(reinterpret_cast<uint8_t*>(&log_v), reinterpret_cast<uint8_t*>(&log_v) + sizeof(log_v)), "\n");
+        }
     }
     catch (std::exception & e)
     {

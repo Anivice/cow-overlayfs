@@ -40,6 +40,7 @@
 #include <type_traits>
 #include <source_location>
 #include "color.h"
+#include "rstring.h"
 
 #define construct_simple_type_compare(type)                             \
     template <typename T>                                               \
@@ -165,6 +166,7 @@ namespace debug {
     void _log(const ParamType& param, const Args&... args);
 
     /////////////////////////////////////////////////////////////////////////////////////////////
+    extern uint64_t preceding_size;
     template <typename Container>
 	requires (debug::is_container_v<Container> &&
 		!debug::is_map_v<Container> &&
@@ -179,7 +181,7 @@ namespace debug {
             if (num_elements == max_elements)
             {
                 _log("\n");
-                _log("    ");
+                _log(std::string(preceding_size + 4, ' '));
                 num_elements = 0;
             }
 
@@ -409,9 +411,13 @@ namespace debug {
                 return;
             }
 
-            _log(color::color(0, 2, 2), std::format("{:%Y-%m-%d %H:%M:%S}", local_time), " ",
-                user_prefix_addon, (user_prefix_addon.empty() ? "" : " "),
-                prefix, ": ", color::no_color());
+            const auto time_stamp = std::format("{:%Y-%m-%d %H:%M:%S}", local_time);
+            user_prefix_addon += (user_prefix_addon.empty() ? "" : " ");
+            _log(color::color(0, 2, 2), time_stamp, " ",
+                user_prefix_addon, prefix, ": ", color::no_color());
+            regex_replace_all(prefix, R"(.\[.*\dm)", [](std::string)->std::string{ return ""; }); // remove color codes, if any
+            regex_replace_all(user_prefix_addon, R"(.\[.*\dm)", [](std::string)->std::string{ return ""; }); // remove color codes, if any
+            preceding_size = time_stamp.size() + 1 + user_prefix_addon.size() + prefix.size() + 2;
         }
 
         if constexpr (!is_char_array<LastType>::value)

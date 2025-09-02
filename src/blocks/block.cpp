@@ -86,7 +86,7 @@ void c_bin2hex(const char bin, char hex[2])
     hex[1] = find_in_table(bin_b);
 }
 
-std::string bin2hex(const std::vector < char > & vec)
+std::string cow_block::bin2hex(const std::vector < char > & vec)
 {
     std::string result;
     char buffer [3] { };

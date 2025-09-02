@@ -6,9 +6,9 @@
 
 struct LayerInfoType
 {
-    std::string path_to_block_attribute_dir;
     std::string path_to_data_blocks;
     std::string root_inode_name;
+    std::string log_dir;
     uint64_t block_size;
 };
 

@@ -28,6 +28,7 @@ std::atomic_uint debug::filter_level = !!!DEBUG;
 unsigned int debug::log_level = 1;
 bool debug::endl_found_in_last_log = true;
 std::ostream * debug::output = nullptr;
+uint64_t debug::preceding_size = 0;
 std::string debug::strip_func_name(const std::string & name)
 {
     const std::regex pattern(R"([\w]+ (.*)\(.*\))");

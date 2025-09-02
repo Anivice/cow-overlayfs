@@ -27,4 +27,13 @@ class cppCowOverlayBaseErrorType : public std::runtime_error
         public: explicit name(const std::string & msg) : cppCowOverlayBaseErrorType(#name ": " + msg) {}                \
     }
 
+// define a simple exception from the base class
+#define def_except_with_trace(name)                                                                                             \
+    class name final : public cppCowOverlayBaseErrorType {                                                                      \
+        public: explicit name(const std::string & msg) : cppCowOverlayBaseErrorType(require_back_trace, #name ": " + msg) {}    \
+    }
+
+// throw an exception containing filename and line number
+#define easy_throw_except(name, msg) throw name(std::string("Exception " #name " thrown: " __FILE__ ":" _error_h_str(__LINE__) ": ") + (msg))
+
 #endif //HALOKEYBOARD_ERROR_H
