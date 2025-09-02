@@ -68,9 +68,16 @@ add_executable(cppCowOverlay            src/main.cpp
         src/debug/execute_command.cpp   src/include/execute_command.h
         src/utils/lz4.c                 src/include/lz4.h
         src/utils/configuration.cpp     src/include/configuration.h
-        src/utils/rstring.cpp
-        src/include/rstring.h
+        src/utils/rstring.cpp           src/include/rstring.h
         src/include/layer_info.h
-        src/blocks/block.cpp
-        src/include/block.h
+        src/blocks/block.cpp            src/include/block.h
+        src/blocks/inode.cpp            src/include/inode.h
+        src/include/main_redirect.h     src/mkfs.cpp src/mount.cpp src/fsck.cpp
+)
+
+add_custom_target(MakeUtilities
+        COMMAND ${CMAKE_COMMAND} -E create_symlink cppCowOverlay mkfs.cppCowOverlay
+        COMMAND ${CMAKE_COMMAND} -E create_symlink cppCowOverlay fsck.cppCowOverlay
+        COMMAND ${CMAKE_COMMAND} -E create_symlink cppCowOverlay mount.cppCowOverlay
+        DEPENDS cppCowOverlay
 )

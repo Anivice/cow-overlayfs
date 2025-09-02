@@ -3,72 +3,32 @@
 #include "configuration.h"
 #include "layer_info.h"
 #include "block.h"
+#include "main_redirect.h"
+#include  "rstring.h"
 
 int main(int argc, char *argv[])
 {
     try
     {
-        info_log(*argv, ": build ID ", BUILD_ID, ", built on ", BUILD_TIME, ", version ", VERSION, "\n");
-        if (argc != 3)
+        std::string redirect_name(argv[0]);
+        regex_replace_all(redirect_name, R"(.*/)", [](std::string)->std::string{ return ""; });
+        regex_replace_all(redirect_name, R"(\..*)", [](std::string)->std::string{ return ""; });
+        if (redirect_name == "fsck")
         {
-            error_log(*argv, " [Configuration] [Mount Point]\n");
-            return EXIT_FAILURE;
+            return fsck_main(argc, argv);
         }
 
-        const std::string config_path = argv[1];
-        const std::string mount_point = argv[2];
-        LayerInfoType layer_global_readonly_info {};
-        info_log("Using configuration ", config_path, ", mounting at ", mount_point, "\n");
-        for (const configuration config(config_path);
-            const auto & [section, keys] : config)
+        if (redirect_name == "mkfs")
         {
-            debug_log("Checking section ", section, "...\n");
-            if (section != "general")
-            {
-                warning_log("Section \"", section, "\" unknown, skipped\n");
-                continue;
-            }
-
-            for (const auto & [key, val] : keys)
-            {
-                cow_assert_wm(val.size() == 1, InvalidConfiguration, "Faulty definition of key \"" + key + "\"")
-                debug_log("Entry: Section \"", section, "\": \"", key, "\": \"", val, "\"\n");
-                if (key == "log")
-                {
-                    layer_global_readonly_info.log_dir = val.front();
-                }
-                else if (key == "data")
-                {
-                    layer_global_readonly_info.path_to_data_blocks = val.front();
-                }
-                else if (key == "block_size")
-                {
-                    layer_global_readonly_info.block_size = std::strtoull(val.front().c_str(), nullptr, 10);
-                }
-                else if (key == "root")
-                {
-                    layer_global_readonly_info.root_inode_name = val.front();
-                }
-                else
-                {
-                    warning_log("Unknown key \"" + key + "\", skipped\n");
-                }
-            }
+            return mkfs_main(argc, argv);
         }
 
-        cow_assert_wm(
-            !(layer_global_readonly_info.block_size == 0
-                || layer_global_readonly_info.root_inode_name.empty()
-                || layer_global_readonly_info.log_dir.empty()
-                || layer_global_readonly_info.path_to_data_blocks.empty()),
-            InvalidConfiguration, "Faulty configuration!");
-
-        const cow_block::log_manager log(layer_global_readonly_info.log_dir);
-        log.append_log(1, 2);
-        for (auto & log_v : log.get_last_n_logs(1))
+        if (redirect_name == "mount")
         {
-            debug_log(std::vector<uint8_t>(reinterpret_cast<uint8_t*>(&log_v), reinterpret_cast<uint8_t*>(&log_v) + sizeof(log_v)), "\n");
+            return mount_main(argc, argv);
         }
+
+        throw std::invalid_argument("Unknown command");
     }
     catch (std::exception & e)
     {

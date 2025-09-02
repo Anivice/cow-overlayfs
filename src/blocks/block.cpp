@@ -97,3 +97,130 @@ std::string cow_block::bin2hex(const std::vector < char > & vec)
 
     return result;
 }
+
+block_manager::block_manager(std::string data_dir, const uint64_t blk_sz)
+    : data_dir(std::move(data_dir)), block_size(blk_sz)
+{
+    const std::vector<uint8_t> data(block_size, 0);
+    zero_pointer_name = bin2hex(hashcrc64(data));
+    mkdir_p(data_dir);
+}
+
+void block_manager::write_in_block(const std::vector < uint8_t > & data) const
+{
+    if (data.size() != block_size) {
+        throw block_manager_invalid_argument("Data size is not equal to block size");
+    }
+
+    const std::string file_name = bin2hex(hashcrc64(data));
+
+    // skip writes for full zeros
+    if (file_name == zero_pointer_name)
+    {
+        return;
+    }
+
+    const std::string path_name = data_dir + "/" + file_name;
+    write_into(file_name, data);
+}
+
+void block_manager::set_block_attribute(const std::string & block_name, const block_attribute_t& attributes) const
+{
+    write_pod(data_dir + "/" + block_name + ".attr", attributes);
+}
+
+[[nodiscard]] block_attribute_t block_manager::get_block_attribute(const std::string & block_name) const
+{
+    block_attribute_t attr;
+    std::ifstream file(data_dir + "/" + block_name + ".attr", std::ios::binary);
+    file.read(reinterpret_cast<char*>(&attr), sizeof(attr));
+    return attr;
+}
+
+[[nodiscard]] uint64_t block_manager::get_block_size() const
+{
+    return block_size;
+}
+
+void log_manager::trunc_log(uint64_t time_point) const
+{
+    log_t log { };
+    std::ifstream file(log_dir + "/log", std::ios::binary);
+    std::ofstream file_new(log_dir + "/log.new", std::ios::binary);
+
+    if (!file || !file_new)
+    {
+        easy_throw_except(log_io_failed, "Failed to open log file");
+    }
+
+    while (log.timestamp.tv_sec < time_point)
+    {
+        file.read(reinterpret_cast<char*>(&log), sizeof(log));
+    }
+
+    while (file.read(reinterpret_cast<char*>(&log), sizeof(log)))
+    {
+        file_new.write(reinterpret_cast<const char*>(&log), sizeof(log));
+    }
+
+    std::filesystem::rename(log_dir + "/log.new", log_dir + "/log");
+}
+
+void log_manager::append_log(const uint64_t action,
+            const uint64_t param1,
+            const uint64_t param2,
+            const uint64_t param3,
+            const uint64_t param4,
+            const uint64_t param5,
+            const uint64_t param6,
+            const uint64_t param7) const
+{
+    log_t log { };
+    if (timespec_get(&log.timestamp, TIME_UTC) == 0)
+    {
+        warning_log("Failed to get current time for log\n");
+    }
+
+    log.params.generic.param1 = param1;
+    log.params.generic.param2 = param2;
+    log.params.generic.param3 = param3;
+    log.params.generic.param4 = param4;
+    log.params.generic.param5 = param5;
+    log.params.generic.param6 = param6;
+    log.params.generic.param7 = param7;
+    log.action = action;
+    std::ofstream file(log_dir + "/log", std::ios::binary | std::ios::app);
+    if (!file)
+    {
+        easy_throw_except(log_io_failed, "Failed to open log file");
+    }
+    file.write(reinterpret_cast<const char*>(&log), sizeof(log));
+    file.close();
+}
+
+[[nodiscard]] std::vector < log_manager::log_t > log_manager::get_last_n_logs(int64_t log_num) const
+{
+    std::vector < log_t > logs;
+    std::ifstream file(log_dir + "/log", std::ios::binary);
+
+    if (!file)
+    {
+        easy_throw_except(log_io_failed, "Failed to open log file");
+    }
+
+    for (int64_t i = 0; i < log_num; i++)
+    {
+        log_t log { };
+        file.seekg(0, std::ios::end);
+        const uint64_t size = file.tellg();
+        if (size <= sizeof(log) * (i + 1))
+        {
+            break;
+        }
+        file.seekg(size - sizeof(log) * (i + 1));
+        file.read(reinterpret_cast<char*>(&log), sizeof(log));
+        logs.push_back(log);
+    }
+
+    return logs;
+}
